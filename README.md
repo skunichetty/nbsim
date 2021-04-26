@@ -1,0 +1,2 @@
+# N-Body Simulation
+A simulation of the gravitational interactions of n bodies in space. This problem is known to show chaotic behavior (highly dependent on initial conditions), which makes its study particularly fascinating.
