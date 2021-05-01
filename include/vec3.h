@@ -32,6 +32,13 @@ struct Vec3 {
         return copy;
     }
 
+    // const version of operator
+    Vec3 operator+(const Vec3& other) const {
+        Vec3 copy = *this;
+        copy += other;
+        return copy;
+    }
+
     // vector subtraction
     Vec3& operator-=(const Vec3& other) {
         if (this == &other) {
@@ -51,38 +58,59 @@ struct Vec3 {
         return copy;
     }
 
+    // const version of operator
+    Vec3 operator-(const Vec3& other) const {
+        Vec3 copy = *this;
+        copy -= other;
+        return copy;
+    }
+
     // scalar multiplication
-    Vec3& operator*=(const float value) {
+    Vec3& operator*=(const double value) {
         x *= value;
         y *= value;
         z *= value;
         return *this;
     }
 
-    // reuse -= operator b/c DRY code is good
-    Vec3 operator*(const float value) {
+    // reuse *= operator b/c DRY code is good
+    Vec3 operator*(const double value) {
+        Vec3 copy = *this;
+        copy *= value;
+        return copy;
+    }
+
+    // const version of operator
+    Vec3 operator*(const double value) const {
         Vec3 copy = *this;
         copy *= value;
         return copy;
     }
 
     // scalar division
-    Vec3& operator/=(const float value) {
+    Vec3& operator/=(const double value) {
         x /= value;
         y /= value;
         z /= value;
         return *this;
     }
 
-    // reuse -= operator b/c DRY code is good
-    Vec3 operator/(const float value) {
+    // reuse /= operator b/c DRY code is good
+    Vec3 operator/(const double value) {
+        Vec3 copy = *this;
+        copy /= value;
+        return copy;
+    }
+
+    // const version of operator
+    Vec3 operator/(const double value) const {
         Vec3 copy = *this;
         copy /= value;
         return copy;
     }
 
     // Returns the length of the vector
-    double length() { return float(sqrt((x * x) + (y * y) + (z * z))); }
+    double length() { return sqrt((x * x) + (y * y) + (z * z)); }
 
     // Write to output stream overload
     friend std::ostream& operator<<(std::ostream& os, const Vec3& vec);

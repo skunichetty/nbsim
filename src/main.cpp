@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include "engine.h"
 #include "object.h"
 #include "octree.h"
 #include "vec3.h"
@@ -20,6 +21,9 @@ int main() {
         Object{10, Vec3{0, 10, 1}, Vec3{0, 0, 0}, Vec3{0, 0, 0}},
         Object{10, Vec3{2, 10, 0}, Vec3{0, 0, 0}, Vec3{0, 0, 0}},
     };
-    Octree octree(100, objects);
-    cout << "Finished" << endl;
+    Engine engine(100, 0.5, 0.1);
+    for (auto& object : objects) {
+        engine.addBody(object);
+    }
+    engine.simulate(10);
 }

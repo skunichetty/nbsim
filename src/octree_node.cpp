@@ -22,7 +22,7 @@ OctreeNode::OctreeNode(const OctreeNode& other)
                        other.localObj->velocity, other.localObj->acceleration};
         for (size_t i = 0; i < other.children.size(); i++) {
             if (other.children[i]) {
-                children[i] = other.children[i];
+                children[i] = new OctreeNode(*other.children[i]);
             }
         }
     }
@@ -129,7 +129,8 @@ void OctreeNode::insert(Object* obj) {
             // convert from external to internal
             Object* temp = localObj;
             localObj = nullptr;
-            localObj = new Object;
+            localObj =
+                new Object{0, Vec3{0, 0, 0}, Vec3{0, 0, 0}, Vec3{0, 0, 0}};
             // insert the old object in new octant
             insert_helper(temp);
             type = OctreeNodeType::INTERNAL;
