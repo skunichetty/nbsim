@@ -37,10 +37,13 @@ class OctreeNode {
     // Children of this node
     std::vector<OctreeNode*> children;
     void insert(Object* obj);
-    OctreeNode(OctreeNodeType type, double width, Vec3& center);
+    // The big five
+    OctreeNode(double width, Vec3& center);
     ~OctreeNode();
     OctreeNode(const OctreeNode& other);
+    OctreeNode(OctreeNode&& other);
     OctreeNode& operator=(const OctreeNode& other);
+    OctreeNode& operator=(OctreeNode&& other);
 };
 
 #endif

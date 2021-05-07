@@ -17,9 +17,17 @@ Octree::Octree(const Octree& other)
     root = new OctreeNode(*other.root);
 }
 
-Octree& Octree::operator=(const Octree& other) {
-    Octree temp = *this;
-    swap(temp, *this);
+Octree::Octree(Octree&& other)
+    : simWidth{other.simWidth}, root{other.root}, objects{other.objects} {
+    other.root = nullptr;
+}
+
+Octree& Octree::operator=(const Octree& other) { return *this = Octree(other); }
+
+Octree& Octree::operator=(Octree&& other) {
+    swap(simWidth, other.simWidth);
+    swap(root, other.root);
+    swap(objects, other.objects);
     return *this;
 }
 
@@ -27,7 +35,7 @@ void Octree::insert(Object& object) {
     objects.push_back(object);
     if (!root) {
         Vec3 center = {0, 0, 0};
-        root = new OctreeNode(OctreeNodeType::EXTERNAL, simWidth, center);
+        root = new OctreeNode(simWidth, center);
     }
     root->insert(&object);
 }
@@ -103,18 +111,18 @@ void Octree::update(double theta, double dt) {
     updateMotion(dt);
 }
 
-void Octree::printSummary() {
-    std::cout << "=======SUMMARY======="
-              << "\n";
+void Octree::printSummary(ostream& os) {
+    os << "=======SUMMARY======="
+       << "\n";
     for (auto& object : objects) {
-        std::cout << object << "\n";
+        os << object << "\n";
     }
 }
 
 void Octree::rebuildTree() {
     delete root;
     Vec3 center = {0, 0, 0};
-    root = new OctreeNode(OctreeNodeType::EXTERNAL, simWidth, center);
+    root = new OctreeNode(simWidth, center);
     for (auto& object : objects) {
         root->insert(&object);
     }

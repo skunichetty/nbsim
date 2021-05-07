@@ -2,6 +2,7 @@
 #ifndef OCTREE_H
 #define OCTREE_H
 
+#include <ostream>
 #include <vector>
 
 #include "object.h"
@@ -40,15 +41,19 @@ class Octree {
     void insert(Object& object);
     // Traverses the tree and updates bodies
     void update(double theta, double dt);
-    // prints a summary of all the current bodies and their state
-    void printSummary();
+    // prints a summary of all the current bodies and their state to the output
+    // stream passed in
+    void printSummary(std::ostream& os);
     // rebuilds the tree from root
     void rebuildTree();
-    // Assignment operator
-    Octree& operator=(const Octree& other);
+
     Octree();
     Octree(double simWidth);
+    // Big Five
+    Octree& operator=(const Octree& other);
+    Octree& operator=(Octree&& other);
     Octree(const Octree& other);
+    Octree(Octree&& other);
     ~Octree();
 };
 

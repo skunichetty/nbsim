@@ -2,8 +2,9 @@
 
 using namespace std;
 
-OctreeNode::OctreeNode(OctreeNodeType type, double width, Vec3& center)
-    : type{type},
+// default constructor
+OctreeNode::OctreeNode(double width, Vec3& center)
+    : type{OctreeNodeType::EXTERNAL},
       width{width},
       localObj{nullptr},
       center{center},
@@ -12,8 +13,13 @@ OctreeNode::OctreeNode(OctreeNodeType type, double width, Vec3& center)
     // internal
 }
 
+// copy constructor
 OctreeNode::OctreeNode(const OctreeNode& other)
-    : type{other.type}, width{other.width}, center{other.center} {
+    : type{other.type},
+      width{other.width},
+      localObj{nullptr},
+      center{other.center},
+      children{vector<OctreeNode*>(8, nullptr)} {
     if (type == OctreeNodeType::EXTERNAL) {
         localObj = other.localObj;
     } else {
@@ -28,9 +34,29 @@ OctreeNode::OctreeNode(const OctreeNode& other)
     }
 }
 
+// assignment operator. Uses copy swap idiom.
 OctreeNode& OctreeNode::operator=(const OctreeNode& other) {
-    OctreeNode temp = other;
-    swap(*this, temp);
+    return *this = OctreeNode(other);
+}
+
+// move constructor
+OctreeNode::OctreeNode(OctreeNode&& other)
+    : type{other.type},
+      width{other.width},
+      localObj{other.localObj},
+      center{other.center},
+      children{other.children} {
+    other.localObj = nullptr;
+    other.children = vector<OctreeNode*>(8, nullptr);
+}
+
+// move assignment operator
+OctreeNode& OctreeNode::operator=(OctreeNode&& other) {
+    std::swap(other.type, type);
+    std::swap(other.width, width);
+    std::swap(other.localObj, localObj);
+    std::swap(other.center, center);
+    std::swap(other.children, children);
     return *this;
 }
 
@@ -39,7 +65,7 @@ OctreeNode::~OctreeNode() {
         // if an internal node, localObj is phantom obj - this instance owns it
         delete localObj;
         // clear all children nodes and reset them
-        for (auto child : children) {
+        for (auto& child : children) {
             delete child;
             child = nullptr;
         }
@@ -50,8 +76,8 @@ OctreeNode::~OctreeNode() {
 
 void OctreeNode::insert_helper(Object* obj) {
     // update center of mass info
-    localObj->mass += obj->mass;
     localObj->position = centerOfMass(obj, localObj);
+    localObj->mass += obj->mass;
     // insert child in its respective octant
     Octant oct = getOctant(obj);
     int index = static_cast<int>(oct);
@@ -61,58 +87,50 @@ void OctreeNode::insert_helper(Object* obj) {
             case Octant::FIRST: {
                 Vec3 newCenter =
                     center + Vec3{width / 4.0, width / 4.0, width / 4.0};
-                children[index] = new OctreeNode(OctreeNodeType::EXTERNAL,
-                                                 width / 2, newCenter);
+                children[index] = new OctreeNode(width / 2, newCenter);
                 break;
             }
             case Octant::SECOND: {
                 Vec3 newCenter =
                     center + Vec3{width / 4.0, width / 4.0, -1 * width / 4.0};
-                children[index] = new OctreeNode(OctreeNodeType::EXTERNAL,
-                                                 width / 2, newCenter);
+                children[index] = new OctreeNode(width / 2, newCenter);
                 break;
             }
             case Octant::THIRD: {
                 Vec3 newCenter =
                     center + Vec3{width / 4.0, -1 * width / 4.0, width / 4.0};
-                children[index] = new OctreeNode(OctreeNodeType::EXTERNAL,
-                                                 width / 2, newCenter);
+                children[index] = new OctreeNode(width / 2, newCenter);
                 break;
             }
             case Octant::FOURTH: {
                 Vec3 newCenter = center + Vec3{width / 4.0, -1 * width / 4.0,
                                                -1 * width / 4.0};
-                children[index] = new OctreeNode(OctreeNodeType::EXTERNAL,
-                                                 width / 2, newCenter);
+                children[index] = new OctreeNode(width / 2, newCenter);
                 break;
             }
             case Octant::FIFTH: {
                 Vec3 newCenter =
                     center + Vec3{-1 * width / 4.0, width / 4.0, width / 4.0};
-                children[index] = new OctreeNode(OctreeNodeType::EXTERNAL,
-                                                 width / 2, newCenter);
+                children[index] = new OctreeNode(width / 2, newCenter);
                 break;
             }
             case Octant::SIXTH: {
                 Vec3 newCenter = center + Vec3{-1 * width / 4.0, width / 4.0,
                                                -1 * width / 4.0};
-                children[index] = new OctreeNode(OctreeNodeType::EXTERNAL,
-                                                 width / 2, newCenter);
+                children[index] = new OctreeNode(width / 2, newCenter);
                 break;
             }
             case Octant::SEVENTH: {
                 Vec3 newCenter = center + Vec3{-1 * width / 4.0,
                                                -1 * width / 4.0, width / 4.0};
-                children[index] = new OctreeNode(OctreeNodeType::EXTERNAL,
-                                                 width / 2, newCenter);
+                children[index] = new OctreeNode(width / 2, newCenter);
                 break;
             }
             case Octant::EIGHT: {
                 Vec3 newCenter =
                     center +
                     Vec3{-1 * width / 4.0, -1 * width / 4.0, -1 * width / 4.0};
-                children[index] = new OctreeNode(OctreeNodeType::EXTERNAL,
-                                                 width / 2, newCenter);
+                children[index] = new OctreeNode(width / 2, newCenter);
                 break;
             }
         }

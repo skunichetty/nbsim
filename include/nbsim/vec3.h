@@ -41,13 +41,7 @@ struct Vec3 {
 
     // vector subtraction
     Vec3& operator-=(const Vec3& other) {
-        if (this == &other) {
-            *this = {0, 0, 0};
-            return *this;
-        }
-        x -= other.x;
-        y -= other.y;
-        z -= other.z;
+        *this += (other * -1);
         return *this;
     }
 
@@ -89,9 +83,7 @@ struct Vec3 {
 
     // scalar division
     Vec3& operator/=(const double value) {
-        x /= value;
-        y /= value;
-        z /= value;
+        *this *= 1 / float(value);
         return *this;
     }
 
@@ -108,6 +100,13 @@ struct Vec3 {
         copy /= value;
         return copy;
     }
+
+    // vector equality
+    bool operator==(const Vec3& other) const {
+        return x == other.x && y == other.y && z == other.z;
+    }
+
+    bool operator!=(const Vec3& other) const { return !(*this == other); }
 
     // Returns the length of the vector
     double length() { return sqrt((x * x) + (y * y) + (z * z)); }
