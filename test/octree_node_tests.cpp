@@ -5,7 +5,7 @@
 TEST(test_basic_init) {
     Vec3 center{0, 0, 0};
     OctreeNode node(1000, center);
-    ASSERT_EQUAL(node.width, 1000);
+    ASSERT_EQUAL(node.box.width, 1000);
     ASSERT_EQUAL(node.type, OctreeNodeType::EXTERNAL);
     Object obj{10, Vec3{1, 0, 0}, Vec3{0, 1, 0}, Vec3{0, 0, 1}};
     Object obj2{10, Vec3{-1, -1, -1}, Vec3{0, -1, 0}, Vec3{0, 0, -1}};

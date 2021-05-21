@@ -5,9 +5,8 @@ using namespace std;
 // default constructor
 OctreeNode::OctreeNode(double width, Vec3& center)
     : type{OctreeNodeType::EXTERNAL},
-      width{width},
+      box{BoundingBox(center, width)},
       localObj{nullptr},
-      center{center},
       children{vector<OctreeNode*>(8, nullptr)} {
     // every single node starts off as external - only by growing does it become
     // internal
@@ -16,9 +15,8 @@ OctreeNode::OctreeNode(double width, Vec3& center)
 // copy constructor
 OctreeNode::OctreeNode(const OctreeNode& other)
     : type{other.type},
-      width{other.width},
+      box{BoundingBox(other.box.center, other.box.width)},
       localObj{nullptr},
-      center{other.center},
       children{vector<OctreeNode*>(8, nullptr)} {
     if (type == OctreeNodeType::EXTERNAL) {
         localObj = other.localObj;
@@ -42,9 +40,8 @@ OctreeNode& OctreeNode::operator=(const OctreeNode& other) {
 // move constructor
 OctreeNode::OctreeNode(OctreeNode&& other)
     : type{other.type},
-      width{other.width},
+      box{BoundingBox(other.box.center, other.box.width)},
       localObj{other.localObj},
-      center{other.center},
       children{other.children} {
     other.localObj = nullptr;
     other.children = vector<OctreeNode*>(8, nullptr);
@@ -52,11 +49,10 @@ OctreeNode::OctreeNode(OctreeNode&& other)
 
 // move assignment operator
 OctreeNode& OctreeNode::operator=(OctreeNode&& other) {
-    std::swap(other.type, type);
-    std::swap(other.width, width);
-    std::swap(other.localObj, localObj);
-    std::swap(other.center, center);
-    std::swap(other.children, children);
+    swap(other.type, type);
+    swap(other.box, box);
+    swap(other.localObj, localObj);
+    swap(other.children, children);
     return *this;
 }
 
@@ -74,7 +70,7 @@ OctreeNode::~OctreeNode() {
     // localObj, so we don't delete it
 }
 
-void OctreeNode::insert_helper(Object* obj) {
+void OctreeNode::insertOctant(Object* obj) {
     // update center of mass info
     localObj->position = centerOfMass(obj, localObj);
     localObj->mass += obj->mass;
@@ -86,51 +82,58 @@ void OctreeNode::insert_helper(Object* obj) {
         switch (oct) {
             case Octant::FIRST: {
                 Vec3 newCenter =
-                    center + Vec3{width / 4.0, width / 4.0, width / 4.0};
-                children[index] = new OctreeNode(width / 2, newCenter);
+                    box.center +
+                    Vec3{box.width / 4.0, box.width / 4.0, box.width / 4.0};
+                children[index] = new OctreeNode(box.width / 2, newCenter);
                 break;
             }
             case Octant::SECOND: {
                 Vec3 newCenter =
-                    center + Vec3{width / 4.0, width / 4.0, -1 * width / 4.0};
-                children[index] = new OctreeNode(width / 2, newCenter);
+                    box.center + Vec3{box.width / 4.0, box.width / 4.0,
+                                      -1 * box.width / 4.0};
+                children[index] = new OctreeNode(box.width / 2, newCenter);
                 break;
             }
             case Octant::THIRD: {
                 Vec3 newCenter =
-                    center + Vec3{width / 4.0, -1 * width / 4.0, width / 4.0};
-                children[index] = new OctreeNode(width / 2, newCenter);
+                    box.center + Vec3{box.width / 4.0, -1 * box.width / 4.0,
+                                      box.width / 4.0};
+                children[index] = new OctreeNode(box.width / 2, newCenter);
                 break;
             }
             case Octant::FOURTH: {
-                Vec3 newCenter = center + Vec3{width / 4.0, -1 * width / 4.0,
-                                               -1 * width / 4.0};
-                children[index] = new OctreeNode(width / 2, newCenter);
+                Vec3 newCenter =
+                    box.center + Vec3{box.width / 4.0, -1 * box.width / 4.0,
+                                      -1 * box.width / 4.0};
+                children[index] = new OctreeNode(box.width / 2, newCenter);
                 break;
             }
             case Octant::FIFTH: {
                 Vec3 newCenter =
-                    center + Vec3{-1 * width / 4.0, width / 4.0, width / 4.0};
-                children[index] = new OctreeNode(width / 2, newCenter);
+                    box.center + Vec3{-1 * box.width / 4.0, box.width / 4.0,
+                                      box.width / 4.0};
+                children[index] = new OctreeNode(box.width / 2, newCenter);
                 break;
             }
             case Octant::SIXTH: {
-                Vec3 newCenter = center + Vec3{-1 * width / 4.0, width / 4.0,
-                                               -1 * width / 4.0};
-                children[index] = new OctreeNode(width / 2, newCenter);
+                Vec3 newCenter =
+                    box.center + Vec3{-1 * box.width / 4.0, box.width / 4.0,
+                                      -1 * box.width / 4.0};
+                children[index] = new OctreeNode(box.width / 2, newCenter);
                 break;
             }
             case Octant::SEVENTH: {
-                Vec3 newCenter = center + Vec3{-1 * width / 4.0,
-                                               -1 * width / 4.0, width / 4.0};
-                children[index] = new OctreeNode(width / 2, newCenter);
+                Vec3 newCenter =
+                    box.center + Vec3{-1 * box.width / 4.0,
+                                      -1 * box.width / 4.0, box.width / 4.0};
+                children[index] = new OctreeNode(box.width / 2, newCenter);
                 break;
             }
             case Octant::EIGHT: {
-                Vec3 newCenter =
-                    center +
-                    Vec3{-1 * width / 4.0, -1 * width / 4.0, -1 * width / 4.0};
-                children[index] = new OctreeNode(width / 2, newCenter);
+                Vec3 newCenter = box.center + Vec3{-1 * box.width / 4.0,
+                                                   -1 * box.width / 4.0,
+                                                   -1 * box.width / 4.0};
+                children[index] = new OctreeNode(box.width / 2, newCenter);
                 break;
             }
         }
@@ -150,40 +153,46 @@ void OctreeNode::insert(Object* obj) {
             localObj =
                 new Object{0, Vec3{0, 0, 0}, Vec3{0, 0, 0}, Vec3{0, 0, 0}};
             // insert the old object in new octant
-            insert_helper(temp);
+            insertOctant(temp);
             type = OctreeNodeType::INTERNAL;
         }
-        insert_helper(obj);
+        insertOctant(obj);
     }
 }
 
 Octant OctreeNode::getOctant(Object* obj) {
-    if (obj->position.x < center.x && obj->position.y < center.y &&
-        obj->position.z < center.z) {
+    if (obj->position.x < box.center.x && obj->position.y < box.center.y &&
+        obj->position.z < box.center.z) {
         // is in octant 8
         return Octant::EIGHT;
-    } else if (obj->position.x < center.x && obj->position.y < center.y &&
-               obj->position.z >= center.z) {
+    } else if (obj->position.x < box.center.x &&
+               obj->position.y < box.center.y &&
+               obj->position.z >= box.center.z) {
         // is in octant 7
         return Octant::SEVENTH;
-    } else if (obj->position.x < center.x && obj->position.y >= center.y &&
-               obj->position.z < center.z) {
+    } else if (obj->position.x < box.center.x &&
+               obj->position.y >= box.center.y &&
+               obj->position.z < box.center.z) {
         // is in octant 6
         return Octant::SIXTH;
-    } else if (obj->position.x < center.x && obj->position.y >= center.y &&
-               obj->position.z >= center.z) {
+    } else if (obj->position.x < box.center.x &&
+               obj->position.y >= box.center.y &&
+               obj->position.z >= box.center.z) {
         // is in octant 5
         return Octant::FIFTH;
-    } else if (obj->position.x >= center.x && obj->position.y < center.y &&
-               obj->position.z < center.z) {
+    } else if (obj->position.x >= box.center.x &&
+               obj->position.y < box.center.y &&
+               obj->position.z < box.center.z) {
         // is in octant 4
         return Octant::FOURTH;
-    } else if (obj->position.x >= center.x && obj->position.y < center.y &&
-               obj->position.z >= center.z) {
+    } else if (obj->position.x >= box.center.x &&
+               obj->position.y < box.center.y &&
+               obj->position.z >= box.center.z) {
         // is in octant 3
         return Octant::THIRD;
-    } else if (obj->position.x >= center.x && obj->position.y >= center.y &&
-               obj->position.z < center.z) {
+    } else if (obj->position.x >= box.center.x &&
+               obj->position.y >= box.center.y &&
+               obj->position.z < box.center.z) {
         // is in octant 2
         return Octant::SECOND;
     }

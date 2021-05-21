@@ -41,6 +41,7 @@ TEST(test_copy_ctor) {
 }
 
 // test that assignment operator works properly
+// implicitly tests move assignment
 TEST(test_assignment_op) {
     ostringstream os;
     ostringstream os2;
@@ -61,6 +62,22 @@ TEST(test_assignment_op) {
     // check that they are equal now
     tree.printSummary(os3);
     ASSERT_EQUAL(os2.str(), os3.str());
+}
+
+// tests that tree adjusts width appropriately for variable length widths
+TEST(test_adaptive_width) {
+    ostringstream os;
+    ostringstream os2;
+    Octree tree;
+    tree.printSummary(os);
+    Object obj{10, Vec3{10000, 0, 0}, Vec3{0, 1, 0}, Vec3{0, 0, 1}};
+    Object obj2{10, Vec3{-1, -10000, -1}, Vec3{0, -1, 0}, Vec3{0, 0, -1}};
+    Object obj3{10, Vec3{1, 20000, -1}, Vec3{0, -1, 0}, Vec3{0, 0, -1}};
+    tree.insert(obj);
+    tree.insert(obj2);
+    tree.insert(obj3);
+    tree.printSummary(os2);
+    ASSERT_NOT_EQUAL(os.str(), os2.str());
 }
 
 TEST_MAIN()
