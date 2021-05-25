@@ -44,11 +44,11 @@ test: $(TESTS)
 $(BINDIR)/vec3_tests: $(TESTDIR)/vec3_tests.cpp $(OBJECTDIR)/vec3.o
 	$(CXX) $(FLAGS) -I $(INCLUDEDIR)/test -I $(INCLUDEDIR)/nbsim  $(OBJECTDIR)/vec3.o $< -o $@
 #octree nodes tests
-$(BINDIR)/octree_node_tests: $(TESTDIR)/octree_node_tests.cpp $(OBJECTDIR)/octree_node.o $(OBJECTDIR)/vec3.o
-	$(CXX) $(FLAGS) -I $(INCLUDEDIR)/test -I $(INCLUDEDIR)/nbsim  $(OBJECTDIR)/octree_node.o $(OBJECTDIR)/vec3.o $< -o $@
+$(BINDIR)/octree_node_tests: $(TESTDIR)/octree_node_tests.cpp $(OBJECTDIR)/octree_node.o $(OBJECTDIR)/vec3.o $(OBJECTDIR)/object.o
+	$(CXX) $(FLAGS) -I $(INCLUDEDIR)/test -I $(INCLUDEDIR)/nbsim  $(OBJECTDIR)/octree_node.o $(OBJECTDIR)/vec3.o $(OBJECTDIR)/object.o $< -o $@
 
-$(BINDIR)/octree_tests: $(TESTDIR)/octree_tests.cpp $(OBJECTDIR)/object.o $(OBJECTDIR)/octree.o $(OBJECTDIR)/octree_node.o $(OBJECTDIR)/vec3.o
-	$(CXX) $(FLAGS) -I $(INCLUDEDIR)/test -I $(INCLUDEDIR)/nbsim  $(OBJECTDIR)/object.o $(OBJECTDIR)/octree.o $(OBJECTDIR)/octree_node.o $(OBJECTDIR)/vec3.o $< -o $@
+$(BINDIR)/octree_tests: $(TESTDIR)/octree_tests.cpp $(OBJECTDIR)/object.o $(OBJECTDIR)/body.o $(OBJECTDIR)/octree.o $(OBJECTDIR)/octree_node.o $(OBJECTDIR)/vec3.o
+	$(CXX) $(FLAGS) -I $(INCLUDEDIR)/test -I $(INCLUDEDIR)/nbsim  $(OBJECTDIR)/object.o $(OBJECTDIR)/body.o $(OBJECTDIR)/octree.o $(OBJECTDIR)/octree_node.o $(OBJECTDIR)/vec3.o $< -o $@
 #-----------------------------------------------
 
 # compile sources into objects

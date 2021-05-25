@@ -1,4 +1,5 @@
 #include <sstream>
+#include <stack>
 
 #include "octree.h"
 #include "unit_test_framework.h"
@@ -11,9 +12,9 @@ TEST(test_basic_initialization) {
     ostringstream os2;
     Octree tree(1000);
     tree.printSummary(os);
-    Object obj{10, Vec3{1, 0, 0}, Vec3{0, 1, 0}, Vec3{0, 0, 1}};
-    Object obj2{10, Vec3{-1, -1, -1}, Vec3{0, -1, 0}, Vec3{0, 0, -1}};
-    Object obj3{10, Vec3{1, 1, -1}, Vec3{0, -1, 0}, Vec3{0, 0, -1}};
+    Body obj(10, Vec3{1, 0, 0}, Vec3{0, 1, 0}, Vec3{0, 0, 1});
+    Body obj2(10, Vec3{-1, -1, -1}, Vec3{0, -1, 0}, Vec3{0, 0, -1});
+    Body obj3(10, Vec3{1, 1, -1}, Vec3{0, -1, 0}, Vec3{0, 0, -1});
     tree.insert(obj);
     tree.insert(obj2);
     tree.insert(obj3);
@@ -26,9 +27,9 @@ TEST(test_copy_ctor) {
     ostringstream os2;
     ostringstream os3;
     Octree tree(1000);
-    Object obj{10, Vec3{1, 0, 0}, Vec3{0, 1, 0}, Vec3{0, 0, 1}};
-    Object obj2{10, Vec3{-1, -1, -1}, Vec3{0, -1, 0}, Vec3{0, 0, -1}};
-    Object obj3{10, Vec3{1, 1, -1}, Vec3{0, -1, 0}, Vec3{0, 0, -1}};
+    Body obj(10, Vec3{1, 0, 0}, Vec3{0, 1, 0}, Vec3{0, 0, 1});
+    Body obj2(10, Vec3{-1, -1, -1}, Vec3{0, -1, 0}, Vec3{0, 0, -1});
+    Body obj3(10, Vec3{1, 1, -1}, Vec3{0, -1, 0}, Vec3{0, 0, -1});
     tree.insert(obj);
     tree.insert(obj2);
     Octree tree2 = tree;
@@ -47,9 +48,9 @@ TEST(test_assignment_op) {
     ostringstream os2;
     ostringstream os3;
     Octree tree(1000);
-    Object obj{10, Vec3{1, 0, 0}, Vec3{0, 1, 0}, Vec3{0, 0, 1}};
-    Object obj2{10, Vec3{-1, -1, -1}, Vec3{0, -1, 0}, Vec3{0, 0, -1}};
-    Object obj3{10, Vec3{1, 1, -1}, Vec3{0, -1, 0}, Vec3{0, 0, -1}};
+    Body obj(10, Vec3{1, 0, 0}, Vec3{0, 1, 0}, Vec3{0, 0, 1});
+    Body obj2(10, Vec3{-1, -1, -1}, Vec3{0, -1, 0}, Vec3{0, 0, -1});
+    Body obj3(10, Vec3{1, 1, -1}, Vec3{0, -1, 0}, Vec3{0, 0, -1});
     tree.insert(obj);
     tree.insert(obj2);
     Octree tree2(500);
@@ -66,18 +67,76 @@ TEST(test_assignment_op) {
 
 // tests that tree adjusts width appropriately for variable length widths
 TEST(test_adaptive_width) {
-    ostringstream os;
-    ostringstream os2;
     Octree tree;
-    tree.printSummary(os);
-    Object obj{10, Vec3{10000, 0, 0}, Vec3{0, 1, 0}, Vec3{0, 0, 1}};
-    Object obj2{10, Vec3{-1, -10000, -1}, Vec3{0, -1, 0}, Vec3{0, 0, -1}};
-    Object obj3{10, Vec3{1, 20000, -1}, Vec3{0, -1, 0}, Vec3{0, 0, -1}};
+    Body obj(10, Vec3{10000, 0, 0}, Vec3{0, 1, 0}, Vec3{0, 0, 1});
+    Body obj2(10, Vec3{10000, -8500, -1}, Vec3{0, -1, 0}, Vec3{0, 0, -1});
+    Body obj3(10, Vec3{0, 1, -25000}, Vec3{0, -1, 0}, Vec3{0, 0, -1});
     tree.insert(obj);
+    ASSERT_EQUAL(tree.root->getBounds().width, 30000.0f);
     tree.insert(obj2);
+    ASSERT_EQUAL(tree.root->getBounds().width, 30000.0f);
     tree.insert(obj3);
-    tree.printSummary(os2);
-    ASSERT_NOT_EQUAL(os.str(), os2.str());
+    ASSERT_EQUAL(tree.root->getBounds().width, 75000.0f);
+}
+
+// tests that iterators loop through objects properly
+TEST(test_iterator) {
+    Body obj(10, Vec3{1, 0, 0}, Vec3{0, 1, 0}, Vec3{0, 0, 1});
+    Body obj2(10, Vec3{-1, -1, -1}, Vec3{0, -1, 0}, Vec3{0, 0, -1});
+    Body obj3(10, Vec3{1, 1, -1}, Vec3{0, -1, 0}, Vec3{0, 0, -1});
+    vector<Body> bodies({obj, obj2, obj3});
+    Octree tree(bodies);
+    size_t index = 0;
+    for (auto& body : tree) {
+        ASSERT_EQUAL(body.mass, bodies[index].mass);
+        ASSERT_EQUAL(body.position, bodies[index++].position);
+    }
+}
+
+// test iterator equality
+TEST(test_iterator_equality) {
+    Body obj(10, Vec3{1, 0, 0}, Vec3{0, 1, 0}, Vec3{0, 0, 1});
+    Body obj2(10, Vec3{-1, -1, -1}, Vec3{0, -1, 0}, Vec3{0, 0, -1});
+    Body obj3(10, Vec3{1, 1, -1}, Vec3{0, -1, 0}, Vec3{0, 0, -1});
+    vector<Body> bodies({obj, obj2, obj3});
+    Octree tree(bodies);
+    auto it = tree.begin();
+    auto it2 = tree.begin();
+    ASSERT_EQUAL(it, it2);
+    it2++;
+    ASSERT_NOT_EQUAL(it, it2);
+    ++it;
+    ASSERT_EQUAL(it, it2);
+}
+
+// tests that nodes of the tree can be traversed through root of octree
+TEST(test_tree_traversal) {
+    stack<OctreeNode*> s;
+    Body obj(10, Vec3{1, 0, 0}, Vec3{0, 1, 0}, Vec3{0, 0, 1});
+    Body obj2(10, Vec3{-1, -1, -1}, Vec3{0, -1, 0}, Vec3{0, 0, -1});
+    Body obj3(10, Vec3{1, 1, -1}, Vec3{0, -1, 0}, Vec3{0, 0, -1});
+    vector<Body> bodies({obj, obj2, obj3});
+    Octree tree(bodies);
+    s.push(tree.root);
+    while (!s.empty()) {
+        auto current = s.top();
+        s.pop();
+        if (current->getType() == OctreeNodeType::EXTERNAL) {
+            if (!current->empty()) {
+                ASSERT_FALSE(current->empty());
+                ASSERT_EQUAL(current->getObject().mass, 10.0f);
+            } else {
+                ASSERT_TRUE(current->empty());
+            }
+        } else {
+            ASSERT_NOT_EQUAL(current->getObject().mass, 10.0f);
+        }
+        for (auto child : current->children) {
+            if (child) {
+                s.push(child);
+            }
+        }
+    }
 }
 
 TEST_MAIN()

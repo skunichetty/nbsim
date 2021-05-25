@@ -3,7 +3,7 @@
 using namespace std;
 
 // default constructor
-OctreeNode::OctreeNode(double width, Vec3& center)
+OctreeNode::OctreeNode(float width, Vec3& center)
     : type{OctreeNodeType::EXTERNAL},
       box{BoundingBox(center, width)},
       localObj{nullptr},
@@ -21,9 +21,7 @@ OctreeNode::OctreeNode(const OctreeNode& other)
     if (type == OctreeNodeType::EXTERNAL) {
         localObj = other.localObj;
     } else {
-        localObj =
-            new Object{other.localObj->mass, other.localObj->position,
-                       other.localObj->velocity, other.localObj->acceleration};
+        localObj = new Object(other.localObj->mass, other.localObj->position);
         for (size_t i = 0; i < other.children.size(); i++) {
             if (other.children[i]) {
                 children[i] = new OctreeNode(*other.children[i]);
@@ -79,64 +77,58 @@ void OctreeNode::insertOctant(Object* obj) {
     int index = static_cast<int>(oct);
     if (!(children[index])) {
         // a node doesn't exist here - init it
+        Vec3 newCenter;
         switch (oct) {
             case Octant::FIRST: {
-                Vec3 newCenter =
+                newCenter =
                     box.center +
-                    Vec3{box.width / 4.0, box.width / 4.0, box.width / 4.0};
-                children[index] = new OctreeNode(box.width / 2, newCenter);
+                    Vec3{box.width / 4.0f, box.width / 4.0f, box.width / 4.0f};
                 break;
             }
             case Octant::SECOND: {
-                Vec3 newCenter =
-                    box.center + Vec3{box.width / 4.0, box.width / 4.0,
-                                      -1 * box.width / 4.0};
-                children[index] = new OctreeNode(box.width / 2, newCenter);
+                newCenter =
+                    box.center + Vec3{box.width / 4.0f, box.width / 4.0f,
+                                      -1 * box.width / 4.0f};
                 break;
             }
             case Octant::THIRD: {
-                Vec3 newCenter =
-                    box.center + Vec3{box.width / 4.0, -1 * box.width / 4.0,
-                                      box.width / 4.0};
-                children[index] = new OctreeNode(box.width / 2, newCenter);
+                newCenter =
+                    box.center + Vec3{box.width / 4.0f, -1 * box.width / 4.0f,
+                                      box.width / 4.0f};
                 break;
             }
             case Octant::FOURTH: {
-                Vec3 newCenter =
-                    box.center + Vec3{box.width / 4.0, -1 * box.width / 4.0,
-                                      -1 * box.width / 4.0};
-                children[index] = new OctreeNode(box.width / 2, newCenter);
+                newCenter =
+                    box.center + Vec3{box.width / 4.0f, -1 * box.width / 4.0f,
+                                      -1 * box.width / 4.0f};
                 break;
             }
             case Octant::FIFTH: {
-                Vec3 newCenter =
-                    box.center + Vec3{-1 * box.width / 4.0, box.width / 4.0,
-                                      box.width / 4.0};
-                children[index] = new OctreeNode(box.width / 2, newCenter);
+                newCenter =
+                    box.center + Vec3{-1 * box.width / 4.0f, box.width / 4.0f,
+                                      box.width / 4.0f};
                 break;
             }
             case Octant::SIXTH: {
-                Vec3 newCenter =
-                    box.center + Vec3{-1 * box.width / 4.0, box.width / 4.0,
-                                      -1 * box.width / 4.0};
-                children[index] = new OctreeNode(box.width / 2, newCenter);
+                newCenter =
+                    box.center + Vec3{-1 * box.width / 4.0f, box.width / 4.0f,
+                                      -1 * box.width / 4.0f};
                 break;
             }
             case Octant::SEVENTH: {
-                Vec3 newCenter =
-                    box.center + Vec3{-1 * box.width / 4.0,
-                                      -1 * box.width / 4.0, box.width / 4.0};
-                children[index] = new OctreeNode(box.width / 2, newCenter);
+                newCenter =
+                    box.center + Vec3{-1 * box.width / 4.0f,
+                                      -1 * box.width / 4.0f, box.width / 4.0f};
                 break;
             }
-            case Octant::EIGHT: {
-                Vec3 newCenter = box.center + Vec3{-1 * box.width / 4.0,
-                                                   -1 * box.width / 4.0,
-                                                   -1 * box.width / 4.0};
-                children[index] = new OctreeNode(box.width / 2, newCenter);
+            default: {
+                newCenter = box.center + Vec3{-1 * box.width / 4.0f,
+                                              -1 * box.width / 4.0f,
+                                              -1 * box.width / 4.0f};
                 break;
             }
         }
+        children[index] = new OctreeNode(box.width / 2.0f, newCenter);
     }
     children[index]->insert(obj);
 }
@@ -150,8 +142,7 @@ void OctreeNode::insert(Object* obj) {
             // convert from external to internal
             Object* temp = localObj;
             localObj = nullptr;
-            localObj =
-                new Object{0, Vec3{0, 0, 0}, Vec3{0, 0, 0}, Vec3{0, 0, 0}};
+            localObj = new Object;
             // insert the old object in new octant
             insertOctant(temp);
             type = OctreeNodeType::INTERNAL;
@@ -204,4 +195,14 @@ Vec3 OctreeNode::centerOfMass(Object* o1, Object* o2) {
     Vec3 temp = o1->position * o1->mass + o2->position * o2->mass;
     temp /= (o1->mass + o2->mass);
     return temp;
+}
+
+bool OctreeNode::empty() const { return !localObj; }
+const BoundingBox& OctreeNode::getBounds() const { return box; }
+OctreeNodeType OctreeNode::getType() const { return type; }
+const Object& OctreeNode::getObject() const {
+    if (!empty())
+        return *localObj;
+    else
+        throw runtime_error("Attempted to access empty octree node.");
 }

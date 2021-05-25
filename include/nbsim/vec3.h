@@ -9,9 +9,9 @@
 A 3D Vector to represent locations in simulation space
 */
 struct Vec3 {
-    double x;  // x component of vector
-    double y;  // y component of vector
-    double z;  // z component of vector
+    float x;  // x component of vector
+    float y;  // y component of vector
+    float z;  // z component of vector
 
     // vector addition
     Vec3& operator+=(const Vec3& other) {
@@ -60,7 +60,7 @@ struct Vec3 {
     }
 
     // scalar multiplication
-    Vec3& operator*=(const double value) {
+    Vec3& operator*=(const float value) {
         x *= value;
         y *= value;
         z *= value;
@@ -68,34 +68,34 @@ struct Vec3 {
     }
 
     // reuse *= operator b/c DRY code is good
-    Vec3 operator*(const double value) {
+    Vec3 operator*(const float value) {
         Vec3 copy = *this;
         copy *= value;
         return copy;
     }
 
     // const version of operator
-    Vec3 operator*(const double value) const {
+    Vec3 operator*(const float value) const {
         Vec3 copy = *this;
         copy *= value;
         return copy;
     }
 
     // scalar division
-    Vec3& operator/=(const double value) {
+    Vec3& operator/=(const float value) {
         *this *= 1 / float(value);
         return *this;
     }
 
     // reuse /= operator b/c DRY code is good
-    Vec3 operator/(const double value) {
+    Vec3 operator/(const float value) {
         Vec3 copy = *this;
         copy /= value;
         return copy;
     }
 
     // const version of operator
-    Vec3 operator/(const double value) const {
+    Vec3 operator/(const float value) const {
         Vec3 copy = *this;
         copy /= value;
         return copy;
@@ -109,7 +109,7 @@ struct Vec3 {
     bool operator!=(const Vec3& other) const { return !(*this == other); }
 
     // Returns the length of the vector
-    double length() { return sqrt((x * x) + (y * y) + (z * z)); }
+    float length() { return (float)sqrt((x * x) + (y * y) + (z * z)); }
 
     // Write to output stream overload
     friend std::ostream& operator<<(std::ostream& os, const Vec3& vec);
