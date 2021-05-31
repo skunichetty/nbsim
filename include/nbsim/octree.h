@@ -26,7 +26,7 @@ class Octree {
     // Number of objects stored in object buffer
     size_t size;
     // Width of the root, a cuboid space
-    float width;
+    double width;
     // Body storage for octree. The tree nodes only contain
     // pointers, so only relative locations are maintained as
     // opposed to data types. Bodies stored separately to separate body access
@@ -45,11 +45,13 @@ class Octree {
     void printSummary(std::ostream& os);
     // Builds the tree from root
     void buildTree();
+    // Returns count of items stored
+    size_t count() const;
     // Default constructor, with default simulation width of 1000 meters.
     Octree();
     // Constructor which takes in simWidth. If the maximum simulation width is
     // known beforehand, then tree construction is faster
-    Octree(float simWidth);
+    Octree(double simWidth);
     // Constructor with set of objects. If objects are preknown, tree
     // construction is faster.
     Octree(std::vector<Body>& inputBodies);

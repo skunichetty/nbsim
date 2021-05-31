@@ -3,7 +3,7 @@
 using namespace std;
 
 // default constructor
-OctreeNode::OctreeNode(float width, Vec3& center)
+OctreeNode::OctreeNode(double width, Vec3& center)
     : type{OctreeNodeType::EXTERNAL},
       box{BoundingBox(center, width)},
       localObj{nullptr},
@@ -80,55 +80,52 @@ void OctreeNode::insertOctant(Object* obj) {
         Vec3 newCenter;
         switch (oct) {
             case Octant::FIRST: {
-                newCenter =
-                    box.center +
-                    Vec3{box.width / 4.0f, box.width / 4.0f, box.width / 4.0f};
+                newCenter = box.center + Vec3{box.width / 4.0, box.width / 4.0,
+                                              box.width / 4.0};
                 break;
             }
             case Octant::SECOND: {
-                newCenter =
-                    box.center + Vec3{box.width / 4.0f, box.width / 4.0f,
-                                      -1 * box.width / 4.0f};
+                newCenter = box.center + Vec3{box.width / 4.0, box.width / 4.0,
+                                              -1 * box.width / 4.0};
                 break;
             }
             case Octant::THIRD: {
                 newCenter =
-                    box.center + Vec3{box.width / 4.0f, -1 * box.width / 4.0f,
-                                      box.width / 4.0f};
+                    box.center + Vec3{box.width / 4.0, -1 * box.width / 4.0,
+                                      box.width / 4.0};
                 break;
             }
             case Octant::FOURTH: {
                 newCenter =
-                    box.center + Vec3{box.width / 4.0f, -1 * box.width / 4.0f,
-                                      -1 * box.width / 4.0f};
+                    box.center + Vec3{box.width / 4.0, -1 * box.width / 4.0,
+                                      -1 * box.width / 4.0};
                 break;
             }
             case Octant::FIFTH: {
-                newCenter =
-                    box.center + Vec3{-1 * box.width / 4.0f, box.width / 4.0f,
-                                      box.width / 4.0f};
+                newCenter = box.center + Vec3{-1 * box.width / 4.0,
+                                              box.width / 4.0, box.width / 4.0};
                 break;
             }
             case Octant::SIXTH: {
                 newCenter =
-                    box.center + Vec3{-1 * box.width / 4.0f, box.width / 4.0f,
-                                      -1 * box.width / 4.0f};
+                    box.center + Vec3{-1 * box.width / 4.0, box.width / 4.0,
+                                      -1 * box.width / 4.0};
                 break;
             }
             case Octant::SEVENTH: {
                 newCenter =
-                    box.center + Vec3{-1 * box.width / 4.0f,
-                                      -1 * box.width / 4.0f, box.width / 4.0f};
+                    box.center + Vec3{-1 * box.width / 4.0,
+                                      -1 * box.width / 4.0, box.width / 4.0};
                 break;
             }
             default: {
-                newCenter = box.center + Vec3{-1 * box.width / 4.0f,
-                                              -1 * box.width / 4.0f,
-                                              -1 * box.width / 4.0f};
+                newCenter = box.center + Vec3{-1 * box.width / 4.0,
+                                              -1 * box.width / 4.0,
+                                              -1 * box.width / 4.0};
                 break;
             }
         }
-        children[index] = new OctreeNode(box.width / 2.0f, newCenter);
+        children[index] = new OctreeNode(box.width / 2.0, newCenter);
     }
     children[index]->insert(obj);
 }

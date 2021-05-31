@@ -45,7 +45,7 @@ class OctreeNode {
     // stored, throws an error.
     const Object& getObject() const;
     // The Big Five
-    OctreeNode(float width, Vec3& center);
+    OctreeNode(double width, Vec3& center);
     ~OctreeNode();
     OctreeNode(const OctreeNode& other);
     OctreeNode(OctreeNode&& other);

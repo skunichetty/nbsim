@@ -4,3 +4,4 @@
 build
 bin
 ideas.md
+*.json

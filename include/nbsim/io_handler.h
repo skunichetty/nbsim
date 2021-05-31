@@ -3,12 +3,14 @@
 #define IO_HANDLER_H
 
 #include <fstream>
+#include <string>
 
 #include "octree.h"
 
 /**
  * Handles input/output communication. Specifically, reads input objects from
- * input stream and writes simulation state to output stream
+ * input stream and writes simulation state to output stream. Acts as a wrapper
+ * around both an input stream and an output stream;
  */
 class IOHandler {
    private:
@@ -20,9 +22,11 @@ class IOHandler {
     IOHandler(std::istream& infileStream, std::ostream& outfileStream);
 
     // inserts record into output stream
-    IOHandler& operator<<(const Octree& octree);
+    IOHandler& operator<<(const std::string output);
     // reads object from input stream
-    IOHandler& operator>>(Object& obj);
+    IOHandler& operator>>(Body& body);
+    // bool operator to check for eof in input
+    operator bool() const;
 };
 
 #endif

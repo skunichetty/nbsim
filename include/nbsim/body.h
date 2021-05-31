@@ -12,7 +12,7 @@ class Body : public Object {
     Vec3 velocity;
     Vec3 acceleration;
     Body();
-    Body(float mass, Vec3 position, Vec3 velocity, Vec3 acceleration);
+    Body(double mass, Vec3 position, Vec3 velocity, Vec3 acceleration);
 };
 
 #endif

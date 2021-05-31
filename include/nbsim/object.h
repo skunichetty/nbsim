@@ -11,12 +11,12 @@
  */
 class Object {
    public:
-    float mass;     // Mass of the object
+    double mass;    // Mass of the object
     Vec3 position;  // Position of the object
     bool operator==(const Object& other) const;
     bool operator!=(const Object& other) const;
     Object();
-    Object(float mass, const Vec3& position);
+    Object(double mass, const Vec3& position);
 };
 
 #endif

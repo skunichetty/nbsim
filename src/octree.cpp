@@ -17,7 +17,7 @@ Octree::Octree()
       bodies{new Body[allocSize]},
       root{nullptr} {}
 
-Octree::Octree(float simWidth)
+Octree::Octree(double simWidth)
     : allocSize{8},
       size{0},
       width{simWidth},
@@ -30,14 +30,15 @@ Octree::Octree(vector<Body>& inputBodies)
       bodies{new Body[allocSize]},
       root{nullptr} {
     // find max location of all objects
-    float max_coord = 0.0;
+    double max_coord = 0.0;
     for (const Body& object : inputBodies) {
-        float max_obj_coord =
-            max(object.position.x, max(object.position.y, object.position.z));
+        double max_obj_coord =
+            max(abs(object.position.x),
+                max(abs(object.position.y), abs(object.position.z)));
         max_coord = max(max_coord, max_obj_coord);
         bodies[size++] = object;
     }
-    width = max_coord;
+    width = 2 * max_coord;
     buildTree();
 }
 
@@ -127,3 +128,5 @@ void Octree::buildTree() {
 
 Octree::OctreeIterator Octree::begin() { return OctreeIterator(&bodies[0]); }
 Octree::OctreeIterator Octree::end() { return OctreeIterator(&bodies[size]); }
+
+size_t Octree::count() const { return size; }
