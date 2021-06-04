@@ -57,6 +57,8 @@ int main(int argc, char** argv) {
     bool rflag = false;            // random input
     bool inputModeChosen = false;  // is any input chosen
     bool outputChosen = false;     // a different output location specified
+    bool simWidthChosen = false;   // is the simulation width manually specified
+    bool verboseMode = false;      // should verbose output be printed
     int choice;
     int opt_index;
     // ----- simulation information -----
@@ -71,7 +73,8 @@ int main(int argc, char** argv) {
                              {"input", required_argument, nullptr, 'i'},
                              {"random", required_argument, nullptr, 'r'},
                              {"width", required_argument, nullptr, 'w'},
-                             {"help", no_argument, nullptr, 'h'}};
+                             {"help", no_argument, nullptr, 'h'},
+                             {"verbose", no_argument, nullptr, 'v'}};
     // process options
     while ((choice = getopt_long(argc, argv, "o:i:r:w:h", long_options,
                                  &opt_index)) != -1) {
@@ -119,12 +122,15 @@ int main(int argc, char** argv) {
                 cout << setw(25) << "-r,--random n"
                      << "\tRandomly generates n objects to "
                         "simulate. Default simulation width is set to 1e10."
-                        "but can be expanded by specifying -s option. \n";
+                        "but can be expanded by specifying -w option. \n";
                 cout << setw(25) << "-w,--width simwidth"
                      << "\tManually specifies the width of the simulation "
-                        "space. If not specified, simulation space width will "
-                        "be manually determined from input."
-                        " meters.\n ";
+                        "space in meters. If not specified, simulation space "
+                        "width will "
+                        "be manually determined from input.\n ";
+                cout << setw(25) << "-v,--verbose"
+                     << "\tPrints verbose output messages on simulation "
+                        "progress\n";
                 cout << setw(25) << "-h,--help"
                      << "\tPrints this help message\n";
                 break;
@@ -138,6 +144,12 @@ int main(int argc, char** argv) {
                              << endl;
                         return 1;
                     }
+                    if (n > 100000) {
+                        cerr << "error: Cannot have more than 100000 objects "
+                                "in simulation"
+                             << endl;
+                        return 1;
+                    }
                     rflag = true;
                 } else {
                     cerr << "Error: Cannot set two different input modes"
@@ -145,16 +157,18 @@ int main(int argc, char** argv) {
                     return 1;
                 }
                 break;
-            case 's':
-                // make sure to cross check this simwidth with input object
-                // location
+            case 'w':
                 simWidth = (double)atof(optarg);
+                simWidthChosen = true;
                 if (simWidth <= 0) {
                     cerr << "Error: Cannot have a negative or zero simulation"
                             "width."
                          << endl;
                     return 1;
                 }
+                break;
+            case 'v':
+                verboseMode = true;
         }
     }
     // asserts that an input mode is chosen
@@ -170,24 +184,35 @@ int main(int argc, char** argv) {
     size_t index = optind;
     if (argv[index] != nullptr) {
         timeStep = atof(argv[index++]);
-        if (timeStep <= 0)
-            throw std::runtime_error(
-                "Error: must have time step greater than zero");
-    } else
-        throw std::runtime_error("Error: Time step unspecified.");
+        if (timeStep <= 0) {
+            cerr << "Error: must have time step greater than zero" << endl;
+            return 1;
+        }
+    } else {
+        cerr << "Error: Time step unspecified." << endl;
+        return 1;
+    }
+
     if (argv[index] != nullptr) {
         theta = atof(argv[index++]);
-        if (theta > 1 || theta < 0)
-            throw std::runtime_error("Error: theta must be in [0,1]");
-    } else
-        throw std::runtime_error("Error: Theta value unspecified.");
+        if (theta > 1 || theta < 0) {
+            cerr << "Error: theta must be in [0,1]" << endl;
+            return 1;
+        }
+    } else {
+        cerr << "Error: Theta value unspecified." << endl;
+        return 1;
+    }
     if (argv[index] != nullptr) {
         iterations = size_t(atoi(argv[index++]));
-        if (iterations < 0)
-            throw std::runtime_error(
-                "Error: no. of iterations must be positive.");
-    } else
-        throw std::runtime_error("Error: No. of iterations unspecified.");
+        if (iterations < 0) {
+            cerr << "Error: no. of iterations must be positive." << endl;
+            return 1;
+        }
+    } else {
+        cerr << "Error: No. of iterations unspecified." << endl;
+        return 1;
+    }
 
     stringstream inputString;  // holds random output if used
     if (rflag) generateRandomObjects(inputString, n, simWidth);
@@ -215,21 +240,56 @@ int main(int argc, char** argv) {
     IOHandler io(input, output);
     vector<Body> bodies;
     // load objects into vector
-    while (io) {
-        Body temp;
-        io >> temp;
-        bodies.push_back(temp);
+    size_t body_count = 0;
+    try {
+        while (io) {
+            Body temp;
+            io >> temp;
+            if (simWidthChosen && (std::abs(temp.position.x) > simWidth / 2 ||
+                                   std::abs(temp.position.y) > simWidth / 2 ||
+                                   std::abs(temp.position.z) > simWidth / 2)) {
+                string err_msg =
+                    "Error: Position of object at index " +
+                    to_string(body_count) +
+                    " in input file has position outside of specified "
+                    "simulation "
+                    "bound. Either adjust simulation bound with -w "
+                    "option, or specify no simulation width to automatically "
+                    "determine width from given objects.";
+                throw std::runtime_error(err_msg);
+            }
+            bodies.push_back(temp);
+            index++;
+        }
+    } catch (exception& ee) {
+        cerr << ee.what() << endl;
+        return 1;
     }
     io << "{\"history\":[";
-    Engine engine(theta, timeStep, bodies);
-    for (size_t i = 0; i < 10; i++) {
-        io << engine.step();
-        if (i < 9) io << ",";
+    Engine* engine;
+    // if user selects a specific simulation width, make sure that width is
+    // chosen
+    if (simWidthChosen) {
+        engine = new Engine(theta, timeStep, simWidth);
+        for (auto& body : bodies) {
+            engine->addBody(body);
+        }
+    } else {
+        engine = new Engine(theta, timeStep, bodies);
+    }
+
+    for (size_t i = 0; i < iterations; i++) {
+        io << engine->step();
+        if (i < iterations - 1) io << ",";
+        if (verboseMode) {
+            cout << "Step: " << i + 1 << "/" << iterations << endl;
+        }
     }
     io << "]}";
 
     // cleanup procedures
     fin.close();
     fout.close();
+    delete engine;
     return 0;
 }
