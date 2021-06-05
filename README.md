@@ -4,7 +4,7 @@ A simulation of the gravitational interactions of n bodies in space. This proble
 ## Setup
 To get started, clone this repo and compile the code. With g++:
 `g++ -O3 -I ./include/nbsim src/* -o nbsim`
-Note that the `-O3` flag is important here to maximize performance. If using other compilers, make sure the optimization setting is at max.
+Note that the `-O3` flag is important here to maximize performance. If using other compilers, make sure the optimization setting is as high as possible.
 Then to run the program, run:
 `./nbsim <timestep> <theta> <iterations> [options]`
 where:
@@ -14,7 +14,7 @@ where:
 Run `./nbsim -h` to learn more about options.
 
 ## Quick Start
-Here are some commands to get started, for those who don't have time to learn heavily about the different options:
+Here are some commands to get started quickly without worrying about different runtime options:
 - To run with random input:
 `./nbsim 10 0.5 100 -r 10 -o temp.json`
 This will randomly generate 10 objects, simulate their gravitational iteraction for 10 iterations with 10 seconds in between each evaluation, and then outputs the simulation results to the "temp.json" file.
@@ -22,7 +22,8 @@ This will randomly generate 10 objects, simulate their gravitational iteraction 
 `./nbsim 10 0.5 100 -i input.json -o temp.json`
 This will simulate the gravitational interactions between the objects specified in "input.json" for 10 iterations with 10 seconds in between each evaluation, and then outputs the simulation results to the "temp.json" file.
 A sample "input.json" is given here: (Earth and Moon*)
-```javascript {
+```javascript 
+{
     "bodies": [
         {
             "mass": 5.972e24,
