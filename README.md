@@ -1,5 +1,5 @@
 # nbsim: A N-Body Simulation
-A simulation of the gravitational interactions of n bodies in space. This problem is known to show chaotic behavior (highly dependent on initial conditions), which makes its study particularly fascinating.
+A command line tool simulating the gravitational interactions of planetary bodies.
 
 ## Setup
 To get started, clone this repo and compile the code. With g++:
@@ -11,7 +11,8 @@ where:
 - `timestep` - the amount of time elapsed between each simulation evalution in seconds.
 - `theta` - parameter dictating granularity of simulation. Limited to be in interval [0,1]. Larger value leads to better accuracy, but significantly lower performance. Value of 1 is equivalent to brute-force algorithm. 0.5 is common value.
 - `iterations` - the number of iterations to run the simulation for.
-Run `./nbsim -h` to learn more about options.
+
+Run `./nbsim -h` to learn more about options, or see the [Full Options List](#full-options-list).
 
 ## Quick Start
 Here are some commands to get started quickly without worrying about different runtime options:
@@ -64,7 +65,7 @@ A sample "input.json" is given here: (Earth and Moon*)
     ]
 }
 ```
-\* \- The moon's radius is on average 1,737 kilometers and its velocity is on average 1,022 meters per second. The orbit isn't exactly elliptical, but this approximation should suffice.
+\* \- The moon's radius of orbit is on average 1,737 kilometers and its velocity is on average 1,022 meters per second. While not wholly circular, as assumed for there to be a fixed orbit, choosing an approximate starting radius should allow for approximate behavior to be simulated.
 
 ## Full Options List
 - `-o,--output <filename>` Specifies filename, the output file for simulation results. If not specified,prints output to console.
