@@ -47,6 +47,9 @@ class Octree {
     void buildTree();
     // Returns count of items stored
     size_t count() const;
+    // Recalculates the width of the tree. Returns width, and assigns new tree
+    // width
+    double calculateWidth() const;
     // Default constructor, with default simulation width of 1000 meters.
     Octree();
     // Constructor which takes in simWidth. If the maximum simulation width is

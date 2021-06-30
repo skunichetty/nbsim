@@ -27,6 +27,11 @@ debug: FLAGS += -g3
 debug: $(OBJECTS)
 	$(CXX) $(FLAGS) $(OBJECTS) -o $(BINDIR)/$(EXECUTABLE)_debug
 
+# profile executable
+profile: FLAGS += -O3 -pg
+profile: $(OBJECTS)
+	$(CXX) $(FLAGS) $(OBJECTS) -o $(BINDIR)/$(EXECUTABLE)_profile
+
 # clean up extra files
 clean:
 	rm -rf bin/* build/* *.out

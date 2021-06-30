@@ -146,6 +146,7 @@ void OctreeNode::insert(Object* obj) {
         }
         insertOctant(obj);
     }
+    // cout << OctreeNode::count << endl;
 }
 
 Octant OctreeNode::getOctant(Object* obj) {

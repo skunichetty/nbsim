@@ -139,4 +139,18 @@ TEST(test_tree_traversal) {
     }
 }
 
+// Tests that bounds adapt to width while building. Will not segfault if
+// proper.
+TEST(test_adaptive_bounds) {
+    Body obj(10000, Vec3{1000, 0, 0}, Vec3{0, 1, 0}, Vec3{0, 0, 1});
+    Body obj2(10000, Vec3{-1, -1000, -1}, Vec3{0, -1, 0}, Vec3{0, 0, -1});
+    Body obj3(10000, Vec3{1, 2005, -1}, Vec3{0, -1, 0}, Vec3{0, 0, -1});
+    vector<Body> bodies({obj, obj2, obj3});
+    Octree tree(10);
+    for (Body& obj : bodies) {
+        tree.insert(obj);
+    }
+    tree.buildTree();
+}
+
 TEST_MAIN()
