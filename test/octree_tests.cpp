@@ -131,9 +131,9 @@ TEST(test_tree_traversal) {
         } else {
             ASSERT_NOT_EQUAL(current->getObject().mass, 10.0f);
         }
-        for (auto child : current->children) {
-            if (child) {
-                s.push(child);
+        for (size_t i = 0; i < 8; i++) {
+            if (current->children[i]) {
+                s.push(current->children[i]);
             }
         }
     }

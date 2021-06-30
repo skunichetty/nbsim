@@ -32,7 +32,7 @@ class OctreeNode {
 
    public:
     // Children of this node
-    std::vector<OctreeNode*> children;
+    OctreeNode* children[8];
     // Inserts the object into the subtree starting with this node
     void insert(Object* obj);
     // Returns if there is a local object here

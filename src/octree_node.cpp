@@ -6,25 +6,30 @@ using namespace std;
 OctreeNode::OctreeNode(double width, Vec3& center)
     : type{OctreeNodeType::EXTERNAL},
       box{BoundingBox(center, width)},
-      localObj{nullptr},
-      children{vector<OctreeNode*>(8, nullptr)} {
+      localObj{nullptr} {
     // every single node starts off as external - only by growing does it become
     // internal
+    for (size_t i = 0; i < 8; i++) {
+        children[i] = nullptr;
+    }
 }
 
 // copy constructor
 OctreeNode::OctreeNode(const OctreeNode& other)
     : type{other.type},
       box{BoundingBox(other.box.center, other.box.width)},
-      localObj{nullptr},
-      children{vector<OctreeNode*>(8, nullptr)} {
+      localObj{nullptr} {
+    for (size_t i = 0; i < 8; i++) {
+        children[i] = nullptr;
+    }
     if (type == OctreeNodeType::EXTERNAL) {
         localObj = other.localObj;
+
     } else {
         localObj = new Object(other.localObj->mass, other.localObj->position);
-        for (size_t i = 0; i < other.children.size(); i++) {
+        for (size_t i = 0; i < 8; i++) {
             if (other.children[i]) {
-                children[i] = new OctreeNode(*other.children[i]);
+                children[i] = new OctreeNode(*(other.children[i]));
             }
         }
     }
@@ -39,10 +44,14 @@ OctreeNode& OctreeNode::operator=(const OctreeNode& other) {
 OctreeNode::OctreeNode(OctreeNode&& other)
     : type{other.type},
       box{BoundingBox(other.box.center, other.box.width)},
-      localObj{other.localObj},
-      children{other.children} {
+      localObj{other.localObj} {
     other.localObj = nullptr;
-    other.children = vector<OctreeNode*>(8, nullptr);
+    for (size_t i = 0; i < 8; i++) {
+        children[i] = other.children[i];
+    }
+    for (size_t i = 0; i < 8; i++) {
+        other.children[i] = nullptr;
+    }
 }
 
 // move assignment operator
@@ -59,9 +68,11 @@ OctreeNode::~OctreeNode() {
         // if an internal node, localObj is phantom obj - this instance owns it
         delete localObj;
         // clear all children nodes and reset them
-        for (auto& child : children) {
-            delete child;
-            child = nullptr;
+        if (children != nullptr) {
+            for (size_t i = 0; i < 8; i++) {
+                delete children[i];
+                children[i] = nullptr;
+            }
         }
     }
     // if an external node, this instance does not own the memory pointed to by

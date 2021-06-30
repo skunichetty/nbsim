@@ -54,11 +54,11 @@ void Engine::updateForces(double theta) {
                     if ((bounds.width * bounds.width) / d > theta) {
                         // then the region is too large - need to traverse
                         // children
-                        for (auto ptr : current->children) {
-                            if (ptr != nullptr) {
+                        for (size_t i = 0; i < 8; i++) {
+                            if (current->children[i]) {
                                 // only push nodes which are occupied and not
                                 // the same as the current one being considered
-                                searchContainer.push(ptr);
+                                searchContainer.push(current->children[i]);
                             }
                         }
                     } else {
