@@ -30,6 +30,11 @@ Octree::Octree(vector<Body>& inputBodies)
       bodies{new Body[allocSize]},
       root{nullptr} {
     // find max location of all objects
+    size_t index = 0;
+    for (Body& body : inputBodies) {
+        bodies[index++] = body;
+    }
+    size = index;
     width = calculateWidth();
     buildTree();
 }
@@ -121,6 +126,7 @@ void Octree::printSummary(ostream& os) {
 }
 
 void Octree::buildTree() {
+    width = calculateWidth();
     delete root;
     Vec3 center = {0, 0, 0};
     root = new OctreeNode(width, center);

@@ -2,6 +2,8 @@
 
 using namespace std;
 
+size_t OctreeNode::count = 0;
+
 // default constructor
 OctreeNode::OctreeNode(double width, Vec3& center)
     : type{OctreeNodeType::EXTERNAL},
@@ -12,6 +14,7 @@ OctreeNode::OctreeNode(double width, Vec3& center)
     for (size_t i = 0; i < 8; i++) {
         children[i] = nullptr;
     }
+    count++;
 }
 
 // copy constructor
@@ -33,10 +36,13 @@ OctreeNode::OctreeNode(const OctreeNode& other)
             }
         }
     }
+    count++;
 }
 
 // assignment operator. Uses copy swap idiom.
 OctreeNode& OctreeNode::operator=(const OctreeNode& other) {
+    count++;
+
     return *this = OctreeNode(other);
 }
 
@@ -52,10 +58,13 @@ OctreeNode::OctreeNode(OctreeNode&& other)
     for (size_t i = 0; i < 8; i++) {
         other.children[i] = nullptr;
     }
+    count++;
 }
 
 // move assignment operator
 OctreeNode& OctreeNode::operator=(OctreeNode&& other) {
+    count++;
+
     swap(other.type, type);
     swap(other.box, box);
     swap(other.localObj, localObj);
@@ -141,20 +150,24 @@ void OctreeNode::insertOctant(Object* obj) {
     children[index]->insert(obj);
 }
 
+void OctreeNode::subdivide() {
+    if (type == OctreeNodeType::EXTERNAL) {
+        // convert from external to internal
+        Object* temp = localObj;
+        localObj = nullptr;
+        localObj = new Object;
+        // insert the old object in new octant
+        insertOctant(temp);
+        type = OctreeNodeType::INTERNAL;
+    }
+}
+
 void OctreeNode::insert(Object* obj) {
     if (type == OctreeNodeType::EXTERNAL && localObj == nullptr) {
         // empty external node - just place body here
         localObj = obj;
     } else {
-        if (type == OctreeNodeType::EXTERNAL) {
-            // convert from external to internal
-            Object* temp = localObj;
-            localObj = nullptr;
-            localObj = new Object;
-            // insert the old object in new octant
-            insertOctant(temp);
-            type = OctreeNodeType::INTERNAL;
-        }
+        subdivide();
         insertOctant(obj);
     }
     // cout << OctreeNode::count << endl;

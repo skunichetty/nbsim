@@ -13,3 +13,4 @@ add_executable(nbsim src/main.cpp
 )
 
 target_include_directories(nbsim PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/nbsim)
+target_compile_options(nbsim PUBLIC -pg)

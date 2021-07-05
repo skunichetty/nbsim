@@ -15,13 +15,6 @@
  */
 class OctreeNode {
    private:
-    // Gets the octant which this object should belong in with respect to this
-    // region of space.
-    Octant getOctant(Object* obj);
-    // Gets center of mass of two objects
-    Vec3 centerOfMass(Object* o1, Object* o2);
-    // Inserts object into the correct octant of an octree
-    void insertOctant(Object* obj);
     // Type of this node (internal or external)
     OctreeNodeType type;
     // Bounding region for this node
@@ -29,6 +22,17 @@ class OctreeNode {
     // The "object" in this region. If an external
     // node, is a pointer to a Body.
     Object* localObj;
+    // temp
+    static size_t count;
+    // Gets the octant which this object should belong in with respect to this
+    // region of space.
+    Octant getOctant(Object* obj);
+    // Gets center of mass of two objects
+    Vec3 centerOfMass(Object* o1, Object* o2);
+    // Inserts object into the correct octant of an octree
+    void insertOctant(Object* obj);
+    // Subdivides an external node into many smaller pieces
+    void subdivide();
 
    public:
     // Children of this node

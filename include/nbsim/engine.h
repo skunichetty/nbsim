@@ -23,13 +23,16 @@ class Engine {
     // the square root for speed)
     double approx_distance(const Vec3& pos1, const Vec3& pos2) const;
     // Returns the gravitational force exerted between two objects
-    Vec3 forceGravity(const Object& o1, const Object& o2) const;
+    Vec3 accelerationGravity(const Object& o1, const Object& o2) const;
     // Updates the forces between all different objects in the simulation
     void updateForces(double theta);
     // Updates the motion between all different objects in the simulation
     void updateMotion(double dt);
     // Returns JSON string of current system state;
     std::string printStateJson();
+    // Computes the force exerted on the object obj by all other bodies in the
+    // tree
+    void computeForce(OctreeNode* root, Body& obj);
 
    public:
     // Constructor with only default parameters

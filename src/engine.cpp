@@ -28,46 +28,26 @@ string Engine::step() {
     return printStateJson();
 }
 
-void Engine::updateForces(double theta) {
-    // this is a modified DFS which only traverses all nodes for which the
-    // region they encompass is much larger than the distance between this
-    // region center of mass and the other body
-    if (tree.root->empty()) return;
-    for (auto& object : tree) {
-        // calculate net force for each object
-        Vec3 netForce{0, 0, 0};
-        stack<OctreeNode*> searchContainer;
-        searchContainer.push(tree.root);
-        while (!searchContainer.empty()) {
-            OctreeNode* current = searchContainer.top();
-            searchContainer.pop();
-            // Checks if node is valid, is nonempty, and does not contain the
-            // same object
-            if (current && !current->empty() &&
-                &current->getObject() != &object) {
-                const Object& obj = current->getObject();
-                if (current->getType() == OctreeNodeType::EXTERNAL) {
-                    netForce += forceGravity(object, obj);
-                } else {
-                    const BoundingBox bounds = current->getBounds();
-                    auto d = approx_distance(object.position, obj.position);
-                    if ((bounds.width * bounds.width) / d > theta) {
-                        // then the region is too large - need to traverse
-                        // children
-                        for (size_t i = 0; i < 8; i++) {
-                            if (current->children[i]) {
-                                // only push nodes which are occupied and not
-                                // the same as the current one being considered
-                                searchContainer.push(current->children[i]);
-                            }
-                        }
-                    } else {
-                        netForce += forceGravity(object, obj);
-                    }
+void Engine::computeForce(OctreeNode* root, Body& body) {
+    if (root) {
+        if (root->getType() != OctreeNodeType::EXTERNAL) {
+            const BoundingBox bounds = root->getBounds();
+            auto d = approx_distance(root->getObject().position, body.position);
+            if ((bounds.width * bounds.width) / d > (theta * theta)) {
+                for (size_t i = 0; i < 8; i++) {
+                    computeForce(root->children[i], body);
                 }
             }
+        } else if (&root->getObject() != &body) {
+            body.acceleration += accelerationGravity(root->getObject(), body);
         }
-        object.acceleration += netForce / object.mass;
+    }
+}
+
+void Engine::updateForces(double theta) {
+    if (tree.root->empty()) return;
+    for (auto& object : tree) {
+        computeForce(tree.root, object);
     }
 }
 
@@ -79,11 +59,12 @@ void Engine::updateMotion(double dt) {
     }
 }
 
-Vec3 Engine::forceGravity(const Object& o1, const Object& o2) const {
+inline Vec3 Engine::accelerationGravity(const Object& o1,
+                                        const Object& o2) const {
     Vec3 r12 = o2.position - o1.position;
     double G = 6.678E-11;
     double constantTerm =
-        G * o1.mass * o2.mass / (r12.length() * r12.length() * r12.length());
+        -1 * G * o1.mass / (r12.length() * r12.length() * r12.length());
     Vec3 force = r12 * constantTerm;
     return force;
 }
