@@ -71,6 +71,5 @@ A sample "input.json" is given here: (Earth and Moon*)
 - `-o,--output <filename>` Specifies filename, the output file for simulation results. If not specified,prints output to console.
 - `-i,--input <filename>` Specifies filename, the input file to read objects from
 - `-r,--random <n>` Randomly generates n objects to simulate. Default simulation width is set to 1e10 meters, but can be expanded by specifying the -w option
-- `-w,--width <simwidth>` Manually specifies the width of the simulation space in meters. If not specified, simulation space width will be manually determined from input.
 - `-v,--verbose` Prints verbose output messages on simulation progress.
 - `-h,--help` Prints a help message listing options and arguments.

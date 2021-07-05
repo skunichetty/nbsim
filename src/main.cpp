@@ -85,30 +85,22 @@ void printHelp() {
     cout << "   arguments:\n";
     cout << setw(25) << "timestep"
          << "\tthe amount of time between each movement of "
-            "objects. Smaller values give more accurate "
-            "results, but simulation will take longer as a "
-            "result.\n";
+            "objects.\n";
     cout << setw(25) << "theta"
-         << "\tparameter dictating granularity of simulation. "
-            "Smaller value leads "
-            "to better accuracy, but significantly lower "
-            "performance. Value of 0 is equivalent to brute-force "
-            "algorithm. 0.5 is common value.\n";
+         << "\tparameter dictating granularity of simulation\n";
     cout << setw(25) << "iterations"
          << "\tThe number of iterations for the simulation to "
             "run.\n";
     cout << "   options:\n";
     cout << setw(25) << "-o,--output filename"
          << "\tSpecifies filename, the "
-            "output file for simulation results. If not specified, "
-            "prints output to console.\n ";
+            "output file for simulation results.\n ";
     cout << setw(25) << "-i,--input filename"
          << "\tSpecifies filename, the "
             "input file to read objects from\n";
     cout << setw(25) << "-r,--random n"
          << "\tRandomly generates n objects to "
-            "simulate. Default simulation width is set to 1e10."
-            "but can be expanded by specifying -w option. \n";
+            "simulate.\n";
     cout << setw(25) << "-v,--verbose"
          << "\tPrints verbose output messages on simulation "
             "progress\n";
