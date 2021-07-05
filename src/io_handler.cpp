@@ -12,7 +12,7 @@ IOHandler& IOHandler::operator<<(const std::string output) {
 
 IOHandler& IOHandler::operator>>(Body& body) {
     float mass = 0;
-    char junk;
+    char junk = '\0';
     // position object at correct location
     while (infile >> junk && junk != 'm') continue;
     // move to start

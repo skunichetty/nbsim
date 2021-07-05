@@ -1,7 +1,9 @@
+#include <bitset>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <random>
+#include <unordered_map>
 #include <unordered_set>
 
 #include "engine.h"
@@ -16,23 +18,19 @@ using namespace std;
 /**
  * Generates a JSON string of randomly generated objects
  */
-void generateRandomObjects(stringstream& stringOutput, size_t count,
-                           double width) {
+void generateRandomObjects(stringstream& stringOutput, size_t count) {
     // --seed the RNG--
     random_device device;
     mt19937 twister(device());
-    // --define different distributions for different values--
-
     // generate positions within limits of sim
-    normal_distribution<double> positionGen(-1 * width, width);
+    uniform_real_distribution<double> positionGen(-1 * 1e20, 1e20);
     // generate velocities between 0 and 50000 m/s (fastest comet speed
     // recorded, for reference)
-    normal_distribution<double> velocityGen(0, 50000);
+    uniform_real_distribution<double> velocityGen(0, 50000);
     // generate masses between 100kg and 1e28kg (one order above Jupiter's mass)
-    normal_distribution<double> massGen(100, 1e28);
+    uniform_real_distribution<double> massGen(100, 1e28);
     stringOutput << "{\"bodies\": [";
-
-    // --load tree with random objects--
+    // load string with the values computed
     for (size_t i = 0; i < count; i++) {
         stringOutput << "{\"mass\":" << massGen(twister);
         stringOutput << ",\"position\":{"
@@ -50,246 +48,259 @@ void generateRandomObjects(stringstream& stringOutput, size_t count,
     stringOutput << "]}";
 }
 
-int main(int argc, char** argv) {
-    // ios_base::sync_with_stdio(false);
-    // ----- getopt vars + options -----
-    bool iflag = false;            // input from file
-    bool rflag = false;            // random input
-    bool inputModeChosen = false;  // is any input chosen
-    bool outputChosen = false;     // a different output location specified
-    bool simWidthChosen = false;   // is the simulation width manually specified
-    bool verboseMode = false;      // should verbose output be printed
+struct NbsimOptions {
+    /**
+     * bit options for chosen parameters. The bits read as:
+     * 0 - input file provided
+     * 1 - random input chosen
+     * 2 - any input chosen
+     * 3 - any output chosen
+     * 4 - is verbose mode enabled
+     */
+    bitset<5> options;
+    int nRand = 0;          // Number of planets to randomly generate
+    size_t iterations = 0;  // no. of iterations
+    double timeStep = 1e2;  // timestep to follow
+    double theta = 0.5;     // theta param - level of approximation
+    string finName;         // input filename
+    string foutName;        // output filename
+};
+
+class Vec3HashFunction {
+   private:
+    hash<double> hasher;
+    const size_t C = 0x9e3779b9;  // large prime
+   public:
+    size_t operator()(const Vec3& vec) const {
+        size_t seed = 0;
+        seed ^= hasher(vec.x) + C + (seed << 6) + (seed >> 2);
+        seed ^= hasher(vec.y) + C + (seed << 6) + (seed >> 2);
+        seed ^= hasher(vec.z) + C + (seed << 6) + (seed >> 2);
+        return seed;
+    }
+};
+
+void printHelp() {
+    cout << "usage: nbsim [options] <timestep> theta iterations \n";
+    cout << "   arguments:\n";
+    cout << setw(25) << "timestep"
+         << "\tthe amount of time between each movement of "
+            "objects. Smaller values give more accurate "
+            "results, but simulation will take longer as a "
+            "result.\n";
+    cout << setw(25) << "theta"
+         << "\tparameter dictating granularity of simulation. "
+            "Smaller value leads "
+            "to better accuracy, but significantly lower "
+            "performance. Value of 0 is equivalent to brute-force "
+            "algorithm. 0.5 is common value.\n";
+    cout << setw(25) << "iterations"
+         << "\tThe number of iterations for the simulation to "
+            "run.\n";
+    cout << "   options:\n";
+    cout << setw(25) << "-o,--output filename"
+         << "\tSpecifies filename, the "
+            "output file for simulation results. If not specified, "
+            "prints output to console.\n ";
+    cout << setw(25) << "-i,--input filename"
+         << "\tSpecifies filename, the "
+            "input file to read objects from\n";
+    cout << setw(25) << "-r,--random n"
+         << "\tRandomly generates n objects to "
+            "simulate. Default simulation width is set to 1e10."
+            "but can be expanded by specifying -w option. \n";
+    cout << setw(25) << "-v,--verbose"
+         << "\tPrints verbose output messages on simulation "
+            "progress\n";
+    cout << setw(25) << "-h,--help"
+         << "\tPrints this help message\n";
+}
+
+/**
+ * Gets user specified options. If unable to process user options, will throw
+ * std::runtime_error.
+ */
+NbsimOptions getOptions(int argc, char** argv) {
+    NbsimOptions options;
+    // ---- GETOPT OPTION HANDLING ----
     int choice;
     int opt_index;
-    // ----- simulation information -----
-    ifstream fin;
-    string finName;
-    string foutName;
-    ofstream fout;
-    double simWidth = 1e10;
-    int n = 0;
-    // specify options
     option long_options[] = {{"output", required_argument, nullptr, 'o'},
                              {"input", required_argument, nullptr, 'i'},
                              {"random", required_argument, nullptr, 'r'},
-                             {"width", required_argument, nullptr, 'w'},
                              {"help", no_argument, nullptr, 'h'},
                              {"verbose", no_argument, nullptr, 'v'}};
-    // process options
-    while ((choice = getopt_long(argc, argv, "o:i:r:w:h", long_options,
+    while ((choice = getopt_long(argc, argv, "o:i:r:hv", long_options,
                                  &opt_index)) != -1) {
         switch (choice) {
             case 'o':
-                foutName = string(optarg);
-                outputChosen = true;
+                options.foutName = string(optarg);
+                options.options[3] = true;
                 break;
             case 'i':
-                if (!inputModeChosen) {
-                    iflag = true;
-                    finName = string(optarg);
-                    inputModeChosen = true;
+                if (!options.options[2]) {
+                    options.options[0] = true;
+                    options.finName = string(optarg);
+                    options.options[2] = true;
                 } else {
-                    cerr << "Error: Cannot set two different input modes"
-                         << endl;
-                    return 1;
+                    throw std::runtime_error(
+                        "Cannot set two different input modes");
                 }
                 break;
             case 'h':
-                cout << "usage: nbsim [options] <timestep> theta iterations \n";
-                cout << "   arguments:\n";
-                cout << setw(25) << "timestep"
-                     << "\tthe amount of time between each movement of "
-                        "objects. Smaller values give more accurate "
-                        "results, but simulation will take longer as a "
-                        "result.\n";
-                cout << setw(25) << "theta"
-                     << "\tparameter dictating granularity of simulation. "
-                        "Limited to be in interval [0,1]. Larger value leads "
-                        "to better accuracy, but significantly lower "
-                        "performance. Value of 1 is equivalent to brute-force "
-                        "algorithm. 0.5 is common value.\n";
-                cout << setw(25) << "iterations"
-                     << "\tThe number of iterations for the simulation to "
-                        "run.\n";
-                cout << "   options:\n";
-                cout << setw(25) << "-o,--output filename"
-                     << "\tSpecifies filename, the "
-                        "output file for simulation results. If not specified, "
-                        "prints output to console.\n ";
-                cout << setw(25) << "-i,--input filename"
-                     << "\tSpecifies filename, the "
-                        "input file to read objects from\n";
-                cout << setw(25) << "-r,--random n"
-                     << "\tRandomly generates n objects to "
-                        "simulate. Default simulation width is set to 1e10."
-                        "but can be expanded by specifying -w option. \n";
-                cout << setw(25) << "-w,--width simwidth"
-                     << "\tManually specifies the width of the simulation "
-                        "space in meters. If not specified, simulation space "
-                        "width will "
-                        "be manually determined from input.\n ";
-                cout << setw(25) << "-v,--verbose"
-                     << "\tPrints verbose output messages on simulation "
-                        "progress\n";
-                cout << setw(25) << "-h,--help"
-                     << "\tPrints this help message\n";
+                printHelp();
                 break;
             case 'r':
-                if (!inputModeChosen) {
-                    inputModeChosen = true;
-                    n = atoi(optarg);
+                if (!options.options[2]) {
+                    options.options[2] = true;
+                    size_t n = atoi(optarg);
                     if (n < 0) {
-                        cerr << "Error: Cannot have a negative number of "
-                                "objects in simulation."
-                             << endl;
-                        return 1;
+                        throw std::runtime_error(
+                            "Cannot have a negative number of "
+                            "objects in simulation.");
                     }
                     if (n > 100000) {
-                        cerr << "error: Cannot have more than 100000 objects "
-                                "in simulation"
-                             << endl;
-                        return 1;
+                        throw std::runtime_error(
+                            "Cannot have more than 100000 objects in "
+                            "simulation");
                     }
-                    rflag = true;
+                    options.nRand = n;
+                    options.options[1] = true;
                 } else {
-                    cerr << "Error: Cannot set two different input modes"
-                         << endl;
-                    return 1;
-                }
-                break;
-            case 'w':
-                simWidth = (double)atof(optarg);
-                simWidthChosen = true;
-                if (simWidth <= 0) {
-                    cerr << "Error: Cannot have a negative or zero simulation"
-                            "width."
-                         << endl;
-                    return 1;
+                    throw std::runtime_error(
+                        "Cannot set two different input modes");
                 }
                 break;
             case 'v':
-                verboseMode = true;
+                options.options[4] = true;
         }
     }
     // asserts that an input mode is chosen
-    if (!inputModeChosen) {
-        cerr << "Error: no input mode chosen" << endl;
-        return 1;
+    if (!options.options[2]) {
+        throw std::runtime_error("No input mode chosen");
     }
 
-    // handles remaining arguments
-    double timeStep = 1e2;
-    double theta = 0.5;
-    size_t iterations = 0;
+    // ---- REMAINDER PARAMETER HANDLING ----
     size_t index = optind;
     if (argv[index] != nullptr) {
-        timeStep = atof(argv[index++]);
-        if (timeStep <= 0) {
-            cerr << "Error: must have time step greater than zero" << endl;
-            return 1;
+        options.timeStep = atof(argv[index++]);
+        if (options.timeStep <= 0) {
+            throw std::runtime_error("Must have time step greater than zero");
         }
     } else {
-        cerr << "Error: Time step unspecified." << endl;
-        return 1;
+        throw std::runtime_error("Time step unspecified.");
     }
 
     if (argv[index] != nullptr) {
-        theta = atof(argv[index++]);
-        if (theta > 1 || theta < 0) {
-            cerr << "Error: theta must be in [0,1]" << endl;
-            return 1;
+        options.theta = atof(argv[index++]);
+        if (options.theta < 0) {
+            throw std::runtime_error("Theta must be greater than zero.");
         }
     } else {
-        cerr << "Error: Theta value unspecified." << endl;
-        return 1;
+        throw std::runtime_error("Theta value unspecified.");
     }
     if (argv[index] != nullptr) {
-        iterations = size_t(atoi(argv[index++]));
-        if (iterations < 0) {
-            cerr << "Error: no. of iterations must be positive." << endl;
-            return 1;
+        options.iterations = size_t(atoi(argv[index++]));
+        if (options.iterations < 0) {
+            throw std::runtime_error("No. of iterations must be positive.");
         }
     } else {
-        cerr << "Error: No. of iterations unspecified." << endl;
-        return 1;
+        throw std::runtime_error("No. of iterations unspecified.");
     }
+    return options;
+}
 
-    stringstream inputString;  // holds random output if used
-    if (rflag) generateRandomObjects(inputString, n, simWidth);
-
-    // all input errors resolved, open files if needed
-    if (iflag) {
-        fin = ifstream(finName);
-        if (!fin.is_open()) {
-            cerr << "Error: Could not open input file." << endl;
-            return 1;
-        }
-    }
-    if (outputChosen) {
-        fout = ofstream(foutName);
-        if (!fout.is_open()) {
-            cerr << "Error: Could not open output file." << endl;
-            return 1;
-        }
-    }
-
-    // need to cast fin/fout to regular stream b/c it is a derived type
-    istream& input = (iflag) ? static_cast<istream&>(fin) : inputString;
-    ostream& output = (outputChosen) ? static_cast<ostream&>(fout) : cout;
-    // create IOHandler
-    IOHandler io(input, output);
+Engine* setupEngine(const NbsimOptions& options, IOHandler& io) {
     vector<Body> bodies;
+    unordered_set<Vec3, Vec3HashFunction> positions;
     // load objects into vector
     size_t body_count = 0;
-    try {
-        while (io) {
-            Body temp;
-            io >> temp;
-            if (simWidthChosen && (std::abs(temp.position.x) > simWidth / 2 ||
-                                   std::abs(temp.position.y) > simWidth / 2 ||
-                                   std::abs(temp.position.z) > simWidth / 2)) {
-                string err_msg =
-                    "Error: Position of object at index " +
-                    to_string(body_count) +
-                    " in input file has position outside of specified "
-                    "simulation "
-                    "bound. Either adjust simulation bound with -w "
-                    "option, or specify no simulation width to automatically "
-                    "determine width from given objects.";
-                throw std::runtime_error(err_msg);
+    double max_coord = 0;
+    while (io) {
+        Body temp;
+        io >> temp;
+        auto duplicateIter = positions.find(temp.position);
+        if (duplicateIter != positions.end()) {
+            // Hash check triggered - do finer comparision to make sure they
+            // actually conflict
+            if (temp.position == *duplicateIter && options.options[0]) {
+                ostringstream str;
+                str << "Body at index " << body_count << " in "
+                    << options.finName
+                    << " has the same position as another body, which is "
+                       "not allowed.";
+                throw std::runtime_error(str.str());
             }
-            bodies.push_back(temp);
-            index++;
         }
-    } catch (exception& ee) {
-        cerr << ee.what() << endl;
+        double max_obj_coord =
+            max(abs(temp.position.x),
+                max(abs(temp.position.y), abs(temp.position.z)));
+        max_coord = max(max_coord, max_obj_coord);
+        bodies.push_back(temp);
+        positions.insert(temp.position);
+        body_count++;
+    }
+    Engine* engine = new Engine(options.theta, options.timeStep, max_coord);
+    for (Body& body : bodies) {
+        engine->addBody(body);
+    }
+    return engine;
+}
+
+int main(int argc, char** argv) {
+#ifdef NDEBUG
+    // sync w/ stdio on debug in order to appease valgrind
+    ios_base::sync_with_stdio(false);
+#endif
+    NbsimOptions options;
+    IOHandler* io = nullptr;
+    Engine* engine = nullptr;
+    ifstream fin;
+    ofstream fout;
+    stringstream inputString;  // holds random output if used
+    try {
+        options = getOptions(argc, argv);
+        if (options.options[1])
+            generateRandomObjects(inputString, options.nRand);
+
+        // all input errors resolved, open files if needed
+        if (options.options[0]) {
+            fin.open(options.finName);
+            if (!fin.is_open()) {
+                throw std::runtime_error("Could not open input file.");
+            }
+        }
+        if (options.options[2]) {
+            fout.open(options.foutName);
+            if (!fout.is_open()) {
+                throw std::runtime_error("Could not open output file.");
+            }
+        }
+
+        // need to cast fin/fout to regular stream b/c it is a derived type
+        istream& input =
+            (options.options[0]) ? static_cast<istream&>(fin) : inputString;
+        ostream& output =
+            (options.options[2]) ? static_cast<ostream&>(fout) : cout;
+        io = new IOHandler(input, output);
+        engine = setupEngine(options, *io);
+    } catch (std::exception& e) {
+        cerr << "ERROR:" << e.what() << endl;
         return 1;
     }
-    io << "{\"history\":[";
-    Engine* engine;
-    // if user selects a specific simulation width, make sure that width is
-    // chosen
-    if (simWidthChosen) {
-        engine = new Engine(theta, timeStep, simWidth);
-        for (auto& body : bodies) {
-            engine->addBody(body);
-        }
-    } else {
-        engine = new Engine(theta, timeStep, bodies);
-    }
-
+    size_t iterations = options.iterations;
+    *io << "{\"history\":[";
     for (size_t i = 0; i < iterations; i++) {
-        io << engine->step();
-        if (i < iterations - 1) io << ",";
-        if (verboseMode) {
+        *io << engine->step();
+        if (i < iterations - 1) *io << ",";
+        if (options.options[4]) {
             cout << "Step: " << i + 1 << "/" << iterations << endl;
         }
     }
-    io << "]}";
+    *io << "]}";
 
     // cleanup procedures
-    fin.close();
-    fout.close();
     delete engine;
+    delete io;
     return 0;
 }

@@ -8,8 +8,8 @@
  * A cuboid bounding box
  */
 struct BoundingBox {
-    Vec3 center;   // Center of this bounding box
     double width;  // Width from one side to another
+    Vec3 center;   // Center of this bounding box
     BoundingBox(double width) : center{Vec3{0, 0, 0}}, width{width} {}
     BoundingBox(double x, double y, double z, double width)
         : center{Vec3{x, y, z}}, width{width} {}
