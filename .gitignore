@@ -5,3 +5,9 @@ build
 bin
 ideas.md
 *.json
+
+# ignore bazel build folders
+bazel-bin
+bazel-out
+bazel-testlogs
+bazel-nbsim
