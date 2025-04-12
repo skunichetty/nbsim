@@ -7,3 +7,5 @@ ReferenceAlignment: Left
 RequiresClausePosition: WithPreceding
 SortIncludes: CaseInsensitive
 BreakBeforeBraces: Attach
+BreakConstructorInitializers: BeforeColon
+PackConstructorInitializers: CurrentLine
