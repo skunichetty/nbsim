@@ -84,26 +84,20 @@ void printHelp() {
     cout << "usage: nbsim [options] <timestep> theta iterations \n";
     cout << "   arguments:\n";
     cout << setw(25) << "timestep"
-         << "\tthe amount of time between each movement of "
-            "objects.\n";
+         << "\tthe amount of time between each movement of objects.\n";
     cout << setw(25) << "theta"
          << "\tparameter dictating granularity of simulation\n";
     cout << setw(25) << "iterations"
-         << "\tThe number of iterations for the simulation to "
-            "run.\n";
+         << "\tThe number of iterations for the simulation to run.\n";
     cout << "   options:\n";
     cout << setw(25) << "-o,--output filename"
-         << "\tSpecifies filename, the "
-            "output file for simulation results.\n ";
+         << "\tSpecifies filename, the output file for simulation results.\n ";
     cout << setw(25) << "-i,--input filename"
-         << "\tSpecifies filename, the "
-            "input file to read objects from\n";
+         << "\tSpecifies filename, the input file to read objects from\n";
     cout << setw(25) << "-r,--random n"
-         << "\tRandomly generates n objects to "
-            "simulate.\n";
+         << "\tRandomly generates n objects to simulate.\n";
     cout << setw(25) << "-v,--verbose"
-         << "\tPrints verbose output messages on simulation "
-            "progress\n";
+         << "\tPrints verbose output messages on simulation progress\n";
     cout << setw(25) << "-h,--help"
          << "\tPrints this help message\n";
 }
@@ -118,11 +112,12 @@ NbsimOptions getOptions(int argc, char** argv) {
     int choice;
     int opt_index;
     option long_options[] = {
-        {"output", required_argument, nullptr, 'o'},
-        {"input", required_argument, nullptr, 'i'},
-        {"random", required_argument, nullptr, 'r'},
-        {"help", no_argument, nullptr, 'h'},
-        {"verbose", no_argument, nullptr, 'v'}};
+        {"output",  required_argument, nullptr, 'o'},
+        {"input",   required_argument, nullptr, 'i'},
+        {"random",  required_argument, nullptr, 'r'},
+        {"help",    no_argument,       nullptr, 'h'},
+        {"verbose", no_argument,       nullptr, 'v'}
+    };
     while ((choice = getopt_long(argc, argv, "o:i:r:hv", long_options, &opt_index)) != -1) {
         switch (choice) {
         case 'o':
@@ -146,12 +141,10 @@ NbsimOptions getOptions(int argc, char** argv) {
                 options.options[2] = true;
                 size_t n = atoi(optarg);
                 if (n < 0) {
-                    throw std::runtime_error("Cannot have a negative number of "
-                                             "objects in simulation.");
+                    throw std::runtime_error("Cannot have a negative number of objects in simulation.");
                 }
                 if (n > 100000) {
-                    throw std::runtime_error("Cannot have more than 100000 objects in "
-                                             "simulation");
+                    throw std::runtime_error("Cannot have more than 100000 objects in simulation");
                 }
                 options.nRand = n;
                 options.options[1] = true;

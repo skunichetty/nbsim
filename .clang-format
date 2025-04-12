@@ -1,4 +1,5 @@
 IndentWidth: 4
+AlignArrayOfStructures: Left
 AlignAfterOpenBracket: BlockIndent
 AllowShortBlocksOnASingleLine: Always
 ColumnLimit: 120
