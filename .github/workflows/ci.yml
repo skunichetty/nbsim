@@ -23,9 +23,9 @@ jobs:
           disk-cache: ${{ github.workflow }}
           repository-cache: true
       - name: Build
-        run: bazel build //...
+        run: bazel build //nbsim/...
       - name: Test
-        run: bazel test //... --test_summary=detailed
+        run: bazel test //nbsim/... --test_summary=detailed
       - if: matrix.os != 'windows-latest'
         uses: jidicula/clang-format-action@v4.15.0
         name: Check Style
