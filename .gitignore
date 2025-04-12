@@ -1,12 +1,16 @@
+# IDE configuration
 .vscode
-*.out
+.idea
+
+# Binary
 *.o
-build
-bin
-ideas.md
+*.exe
+
+# Other Files
+*.out
 *.json
 
-# ignore bazel build folders
+# Bazel
 bazel-bin
 bazel-out
 bazel-testlogs
