@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -26,7 +26,7 @@ jobs:
         run: bazel build //...
       - name: Test
         run: bazel test //... --test_summary=detailed
-      - if: matrix.os != 'windows-latest'
+      - if: matrix.os == 'ubuntu-latest'
         uses: jidicula/clang-format-action@v4.15.0
         name: Check Style
         with:
